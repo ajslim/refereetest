@@ -1,0 +1,30 @@
+{
+  "name": "quarte-riposte-referee-test",
+  "short_name": "QR RefTest",
+  "icons": [
+    {
+      "src": "img/icons/logo-120x120.png",
+      "sizes": "120x120",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "img/icons/logo-180x180.png",
+      "sizes": "180x180",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "img/icons/logo-192x192.png",
+      "sizes": "192x192",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "img/icons/logo-512x512.png",
+      "sizes": "512x512",
+      "purpose": "maskable any"
+    }
+  ],
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#6b0000"
+}
