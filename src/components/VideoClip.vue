@@ -31,25 +31,29 @@
         default: undefined,
       },
     },
-    data: () => {
+    data() {
       return {
-        playSlow: false
-      }
+        playSlow: false,
+      };
     },
     watch: {
       action() {
         this.$refs.videoClip.load();
-      }
+      },
     },
     methods: {
       changeSpeed() {
         const vid = this.$refs.videoClip;
 
         if (!this.playSlow) {
-          vid.playbackRate = .65;
+          vid.playbackRate = 0.65;
         } else {
           vid.playbackRate = 1;
         }
+      },
+      restart() {
+        const vid = this.$refs.videoClip;
+        vid.currentTime = 0;
       },
     },
   };

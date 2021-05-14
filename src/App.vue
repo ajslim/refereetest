@@ -6,27 +6,58 @@
                     <img src="./assets/quarte-riposte-logos-512x512-clear.png" height="80"/>
                     Actions
                 </a>
-
-                <div  @click="test">
-                    Test
-                </div>
             </div>
         </nav>
 
-        <div  v-show="false">
+      <div v-if="showInstructions && actions.length > 0" class="container-fluid instructions">
+        <div class="col-lg-12">
+          <h3>You will be given {{ actions.length }} clips to referee</h3>
 
+          <p>Some notes on making calls:</p>
+          <ul>
+            <li>Call it for the fencer who gets the touch, whether on target or off target</li>
+            <li>A stop-hit should be given as a counter attack</li>
+            <li>An attack from the left that falls short followed by an attack from the right should be given as an attack</li>
+            <li>An attack in preparation should be given as an attack</li>
+            <li>A simultaneous action with one light should be given as simultaneous</li>
+            <li>If a fencer should be carded, select card and assign it to the correct fencer</li>
+            <li>If there is a halt for other reasons, give it to neither and set the call as 'Other / Unknown'</li>
+          </ul>
+
+          <p>The difficulty of the call is determined by the consensus of the votes. If everyone makes the same call, it's easy. If everyone makes a different call, then it's difficult.</p>
+
+          <p>There are some non-action clips in there too, such as the fencers testing their weapons. If that happens, set the call to neither, and select the appropriate comment from the drop down</p>
+
+          <div class="col-lg-12">
+            <label class="submit" @click="startTest()">
+              Start test
+            </label>
+          </div>
+        </div>
+      </div>
+
+        <div v-if="showResults && testResults !== undefined" class="container-fluid">
+           <results :results="testResults"></results>
+
+          <div class="row">
+            <div class="col-lg-6">
+              <label class="submit" @click="restart()">
+                Again?
+              </label>
+            </div>
+          </div>
         </div>
 
-        <div class="container-fluid">
+        <div v-if="showTest === true && actions !== undefined"  class="container-fluid">
             <div class="row">
                 <div class="col-lg-6">
                     <div v-for="(videoAction, index) in actions">
-                        <VideoClip :action="videoAction" v-show="index === currentActionIndex" />
+                        <VideoClip ref="'video' + index" :action="videoAction" v-show="index === currentActionIndex" />
                     </div>
 
                 </div>
                 <div class="col-lg-6">
-                    <VotingForm :action="action" @submit="nextAction()" />
+                    <VotingForm :action="action" @complete="nextAction()" />
                 </div>
 
             </div>
@@ -36,12 +67,15 @@
 </template>
 
 <script>
+  import 'bootstrap/dist/css/bootstrap.css';
+  import 'bootstrap-vue/dist/bootstrap-vue.css';
+  import 'bootstrap-vue/dist/bootstrap-vue-icons.min.css';
   import './assets/styles.less';
-  import 'bootstrap/dist/css/bootstrap.css'
-  import 'bootstrap-vue/dist/bootstrap-vue.css'
 
-  import VotingForm from './components/VotingForm'
-  import VideoClip from './components/VideoClip'
+
+  import VotingForm from './components/VotingForm.vue';
+  import VideoClip from './components/VideoClip.vue';
+  import Results from './components/Results.vue';
 
   const apiBaseUrl = '/api';
 
@@ -50,123 +84,87 @@
     name: 'app',
     components: {
       VotingForm,
-      VideoClip
+      VideoClip,
+      Results,
     },
-    data: () => {
+    data() {
       return {
         actions: [],
         action: {},
         currentActionIndex: 0,
         playSlow: false,
         testId: undefined,
-      }
+        showTest: false,
+        showResults: false,
+        showInstructions: true,
+        testResults: {},
+      };
     },
     async beforeMount() {
-      // const testResponse = await fetch(`${apiBaseUrl}/test/`);
-      // const test = await testResponse.json();
-      this.testId = 41;
-
-      this.actions = [{
-        "video_url": "/storage/bout/CU_kcezU0Eg/clips/57.mp4",
-        "left_fencer_name": "SIDO, Alexandre",
-        "right_fencer_name": "BRAVO, Kenji",
-        "thumb_url": "/storage/bout/CU_kcezU0Eg/lightthumbs/57.png",
-        "index": 0,
-        "vote": {"priority": "1", "call_id": "1", "difficulty": "1"}
-      }, {
-        "video_url": "/storage/bout/9HE-fFeM83g/clips/218.mp4",
-        "left_fencer_name": "CHEUNG, Ka Long",
-        "right_fencer_name": "BIANCHI, Guillaume",
-        "thumb_url": "/storage/bout/9HE-fFeM83g/lightthumbs/218.png",
-        "index": 1,
-        "vote": {"priority": "1", "call_id": "2", "difficulty": "1"}
-      }, {
-        "video_url": "/storage/bout/yXfD_F5beS4/clips/331.mp4",
-        "left_fencer_name": "RIGIN, Dmitry",
-        "right_fencer_name": "HA, Taegyu",
-        "thumb_url": "/storage/bout/yXfD_F5beS4/lightthumbs/331.png",
-        "index": 2,
-        "vote": {"priority": "1", "call_id": "3", "difficulty": "2"}
-      }, {
-        "video_url": "/storage/bout/8bPjIKTM_R0/clips/1372.mp4",
-        "left_fencer_name": "DOUGLAS, Sholto",
-        "right_fencer_name": "DAVIS, James-Andrew",
-        "thumb_url": "/storage/bout/8bPjIKTM_R0/lightthumbs/1372.png",
-        "index": 3,
-        "vote": {"priority": "1", "call_id": "5", "difficulty": "2"}
-      }, {
-        "video_url": "/storage/bout/NG8cgGQ6x9c/clips/417.mp4",
-        "left_fencer_name": "DE GREEF, Stef",
-        "right_fencer_name": "GAROZZO, Daniele",
-        "thumb_url": "/storage/bout/NG8cgGQ6x9c/lightthumbs/417.png",
-        "index": 4,
-        "vote": {"priority": "1", "call_id": "3", "difficulty": "2"}
-      }, {
-        "video_url": "/storage/bout/QeHo5Qsuh1A/clips/1055.mp4",
-        "left_fencer_name": "CHEREMISINOV, Alexey",
-        "right_fencer_name": "MEPSTEAD, Marcus",
-        "thumb_url": "/storage/bout/QeHo5Qsuh1A/lightthumbs/1055.png",
-        "index": 5,
-        "vote": {"priority": "1", "call_id": "2", "difficulty": "2"}
-      }, {
-        "video_url": "/storage/bout/8_yX1HRpDgk/clips/606.mp4",
-        "left_fencer_name": "POGREBNIAK, Andrii",
-        "right_fencer_name": "SAFIN, Timur",
-        "thumb_url": "/storage/bout/8_yX1HRpDgk/lightthumbs/606.png",
-        "index": 6,
-        "vote": {"priority": "0", "call_id": "7", "difficulty": "1"}
-      }, {
-        "video_url": "/storage/bout/CD_OaN263kM/clips/471.mp4",
-        "left_fencer_name": "MEINHARDT, Gerek",
-        "right_fencer_name": "CHEREMISINOV, Alexey",
-        "thumb_url": "/storage/bout/CD_OaN263kM/lightthumbs/471.png",
-        "index": 7,
-        "vote": {"priority": "0", "call_id": "7", "difficulty": "2"}
-      }, {
-        "video_url": "/storage/bout/z8oa8rj9B08/clips/536.mp4",
-        "left_fencer_name": "CASSARA, Andrea",
-        "right_fencer_name": "GAROZZO, Daniele",
-        "thumb_url": "/storage/bout/z8oa8rj9B08/lightthumbs/536.png",
-        "index": 8,
-        "vote": {"priority": "1", "call_id": "3", "difficulty": "2"}
-      }, {
-        "video_url": "/storage/bout/fVrmBvz8n74/clips/1197.mp4",
-        "left_fencer_name": "RIGIN, Dmitry",
-        "right_fencer_name": "LE PECHOUX, Erwann",
-        "thumb_url": "/storage/bout/fVrmBvz8n74/lightthumbs/1197.png",
-        "index": 9,
-        "vote": {"priority": "1", "call_id": "1", "difficulty": "1"}
-      }];
-
-      this.action = this.actions[this.currentActionIndex];
-      this.action.index = this.currentActionIndex;
+      this.reset();
     },
     methods: {
-      async nextAction() {
-        this.currentActionIndex += 1;
-        if (this.currentActionIndex >= this.actions.length) {
+      startTest() {
+        this.showTest = true;
+        this.showInstructions = false;
+      },
+      async reset() {
+        this.currentActionIndex = 0;
+        const testResponse = await fetch(`${apiBaseUrl}/test/`);
+        const test = await testResponse.json();
+        this.testId = test.id;
+        this.actions = test.actions;
 
+        this.showResults = false;
+        this.testResults = {};
+
+        this.action = this.actions[this.currentActionIndex];
+        this.action.index = this.currentActionIndex;
+      },
+      async restart() {
+        this.reset();
+        this.showTest = true;
+      },
+      nextAction() {
+        this.showInstructions = false;
+        this.currentActionIndex += 1;
+
+        // Restart the clip at the beginning
+        const video = this.$refs[`video${this.currentActionIndex}`];
+        if (video !== undefined) {
+          video.restart();
+        }
+
+
+        if (this.currentActionIndex >= this.actions.length) {
+          this.getTestResults();
         } else {
           this.action = this.actions[this.currentActionIndex];
           this.action.index = this.currentActionIndex;
         }
       },
-      async test() {
-        console.log(this.actions);
-
+      async getTestResults() {
         const testResponse = await fetch(`${apiBaseUrl}/test/`, {
           method: 'POST',
           body: JSON.stringify({
             testId: this.testId,
-            actions: this.actions
-          })
+            actions: this.actions,
+          }),
         });
-        const testResults = await testResponse.json();
-        console.log(testResults);
-      }
+
+        this.showTest = false;
+        this.showResults = true;
+
+        this.testResults = await testResponse.json();
+      },
     },
   };
 </script>
 
 <style>
+  .instructions {
+    padding-bottom: 15px;
+    border-bottom: 1px solid #666666;
+    margin-bottom: 15px;
+  }
 </style>

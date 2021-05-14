@@ -1,99 +1,156 @@
 <template>
-    <div class="col-lg-6">
-        {% if verifiedString is defined %}
-        <h6 class="text-muted">Verified</h6>
-        <div class="row">
-            <div class="col">
-                This action has been verified as: {{ verifiedString }}
-            </div>
-        </div>
-        <hr>
-        {% endif %}
-
-        <h6 class="text-muted">Votes so far ({{ votes.total }})</h6>
-        <div class="row">
-            <div class="col">
-                <b>Left</b>
-                {% for call, vote in votes.left %}
-                <div>
-                    {{ call|capitalize }} : {{ vote }}
-                </div>
-                {% if votes.total > 0 %}
-                <div class="graph-bar" style="width: {{ (vote / votes.total) * 100 }}%;">{{ ((vote / votes.total) * 100)|round }}%</div>
-                {% endif %}
-                {% endfor %}
-            </div>
-            <div class="col">
-                <b>Right</b>
-                {% for call, vote in votes.right %}
-
-
-                <div>
-                    {{ call|capitalize }} : {{ vote }}
-                </div>
-                {% if votes.total > 0 %}
-                <div class="graph-bar" style="width: {{ (vote / votes.total) * 100 }}%;">{{ ((vote / votes.total) * 100)|round }}%</div>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col">
-                <b>Neither</b>
-
-                <div>
-                    Simultaneous : {{ votes.simultaneous }}
-                </div>
-
-                {% if votes.total > 0 %}
-                <div class="graph-bar" style="width: {{ (votes.simultaneous / votes.total) * 100 }}%;">{{ ((votes.simultaneous  / votes.total) * 100)|round }}%</div>
-                {% endif %}
-
-            </div>
-            <div class="col">
-            </div>
-        </div>
-
-        <hr>
-
-        <h6 class="text-muted">Cards</h6>
-        <div class="row">
-            <div class="col">
-                Card Left: {{ votes.cardLeft }}
-                {% if votes.total > 0 %}
-                <div class="graph-bar" style="width: {{ (votes.cardLeft / votes.total) * 100 }}%;">{{ ((votes.cardLeft / votes.total) * 100)|round }}%</div>
-                {% endif %}
-            </div>
-            <div class="col">
-                Card Right: {{ votes.cardRight }}
-                {% if votes.total > 0 %}
-                <div class="graph-bar" style="width: {{ (votes.cardRight / votes.total) * 100 }}%;">{{ ((votes.cardRight / votes.total) * 100)|round }}%</div>
-                {% endif %}
-            </div>
-        </div>
+  <div>
+    <div class="row result">
+      <div class="col-lg-12">
+        <h4>Your matched the verified call {{ score }} / {{ total }}</h4>
+      </div>
     </div>
+    <div v-for="(action, index) in verifiedActions">
+      <div class="row result">
+
+        <div class="col-lg-4">
+          <VideoClip :action="action"/>
+        </div>
+        <div class="col-lg-7">
+          <div v-if="action.correctCall !== undefined">
+            <div v-if="action.correct" class="h5 mb-2"><b-icon variant="success" icon="check-circle"></b-icon>Your call matched the verified call!</div>
+            <div>You said: {{ voteToString(action.submittedVote) }}</div>
+            <div v-if="!action.correct">
+              <div>The verified call was {{ voteToString(action.correctCall) }}</div>
+            </div>
+            <div>This action is classified as a {{ difficulty(action.difficulty) }} call</div>
+          </div>
+        </div>
+        <div class="col-lg-1">
+          <div class="actionId">{{ action.id }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="row result">
+      <div class="col-lg-12">
+        <h4>You classified {{ newClassified }} new actions!</h4>
+      </div>
+    </div>
+    <div v-for="(action, index) in unverifiedActions">
+      <div class="row result">
+
+        <div class="col-lg-4">
+          <VideoClip :action="action"/>
+        </div>
+        <div class="col-lg-7">
+          <div>You said: {{ voteToString(action.submittedVote) }}</div>
+
+          <div v-if="action.correctCall === undefined">
+            This action has not yet been verified.
+          </div>
+        </div>
+        <div class="col-lg-1">
+          <div class="actionId">{{ action.id }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-  export default {
-    name: 'app',
-    components: {},
-    props: {
-      action: {
-        type: Object,
-        default: undefined,
-      },
+import { BIcon, BIconCheckCircle } from 'bootstrap-vue';
+import 'bootstrap-vue/dist/bootstrap-vue-icons.min.css';
+import VideoClip from './VideoClip';
+
+
+export default {
+  name: 'app',
+  components: {
+    VideoClip,
+    BIcon,
+    BIconCheckCircle,
+  },
+  props: {
+    results: {
+      type: Object,
+      default: () => {},
     },
-    data: () => {
-      return {
-        playSlow: false
+  },
+  data() {
+    return {};
+  },
+  computed: {
+    verifiedActions() {
+      if (this.results.actions === undefined) {
+        return [];
       }
+
+      return this.results.actions.filter(action => action.correctCall !== undefined);
     },
-    methods: {
+    unverifiedActions() {
+      if (this.results.actions === undefined) {
+        return [];
+      }
+
+      return this.results.actions.filter(action => action.correctCall === undefined);
     },
-  };
+    score() {
+      return this.results.easyCorrectCount + this.results.mediumCorrectCount + this.results.difficultCorrectCount;
+    },
+    total() {
+      return this.results.easy_count + this.results.medium_count + this.results.difficult_count;
+    },
+    newClassified() {
+      if (this.results.actions === undefined) {
+        return 0;
+      }
+
+      return this.results.actions.length - this.total;
+    },
+  },
+  methods: {
+    voteToString(vote) {
+      const actionNames = [
+        'Attack',
+        'Counter Attack',
+        'Riposte',
+        'Remise',
+        'Line',
+        'Unknown / Other',
+        'Simultaneous',
+      ];
+
+      const sides = [
+        'Left',
+        'Right',
+      ];
+
+      if (vote.call_id === 6) {
+        return 'Unknown / Other';
+      }
+
+      if (vote.call_id === 7) {
+        return 'Simultaneous';
+      }
+
+      return `${actionNames[parseInt(vote.call_id, 10) - 1]} from the ${sides[parseInt(vote.priority, 10) - 1]}`;
+    },
+    difficulty(difficulty) {
+      const difficulties = [
+        'Easy',
+        'Medium',
+        'Difficult',
+      ];
+
+      return difficulties[parseInt(difficulty, 10) - 1];
+    },
+  },
+};
 </script>
 
 <style>
+  .result {
+    border-bottom: 1px solid #666666;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+  }
+
+  .actionId {
+    color: #999999;
+  }
 </style>

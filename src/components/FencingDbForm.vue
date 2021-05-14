@@ -234,9 +234,10 @@
         default: undefined,
       },
     },
-    data() {
-      const CALL_IT_FOR = 0;
-      const SELECT_ACTION = 1;
+    data: () => {
+      const API_KEY = 'ndn7SW/H2lf+4iTduFmNXw==';
+      const WHO_INITIATED = 0;
+      const WHERE_STANDING = 1;
       const SELECT_CARD = 2;
       const SELECT_DIFFICULTY = 3;
       const SELECT_NEITHER = 4;
@@ -253,7 +254,7 @@
         SUBMIT,
         currentStepIndex: CALL_IT_FOR,
         vote: {},
-      };
+      }
     },
     methods: {
       complete() {
@@ -261,8 +262,8 @@
         this.vote = {};
         this.$emit('complete');
         this.currentStepIndex = this.CALL_IT_FOR;
-      },
-    },
+      }
+    }
   };
 </script>
 
