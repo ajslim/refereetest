@@ -36,6 +36,10 @@
         </div>
       </div>
 
+      <div v-show="showDbForm " class="container-fluid">
+        <fencing-db-form ref="fencingDbForm" @submit="dbFormSubmitted()"></fencing-db-form>
+      </div>
+
         <div v-if="showResults && testResults !== undefined" class="container-fluid">
            <results :results="testResults"></results>
 
@@ -76,6 +80,7 @@
   import VotingForm from './components/VotingForm.vue';
   import VideoClip from './components/VideoClip.vue';
   import Results from './components/Results.vue';
+  import FencingDbForm from './components/FencingDbForm.vue';
 
   const apiBaseUrl = '/api';
 
@@ -86,6 +91,7 @@
       VotingForm,
       VideoClip,
       Results,
+      FencingDbForm,
     },
     data() {
       return {
@@ -97,7 +103,9 @@
         showTest: false,
         showResults: false,
         showInstructions: true,
+        showDbForm: false,
         testResults: {},
+        enableFencingDb: false,
       };
     },
     async beforeMount() {
@@ -106,6 +114,7 @@
     methods: {
       startTest() {
         this.showTest = true;
+        this.showDbForm = false;
         this.showInstructions = false;
       },
       async reset() {
@@ -114,12 +123,17 @@
         const test = await testResponse.json();
         this.testId = test.id;
         this.actions = test.actions;
+        this.enableFencingDb = test.enableFencingDb;
 
         this.showResults = false;
         this.testResults = {};
 
         this.action = this.actions[this.currentActionIndex];
         this.action.index = this.currentActionIndex;
+
+        if (this.enableFencingDb === true) {
+          await this.$refs.fencingDbForm.reset();
+        }
       },
       async restart() {
         this.reset();
@@ -135,9 +149,8 @@
           video.restart();
         }
 
-
         if (this.currentActionIndex >= this.actions.length) {
-          this.getTestResults();
+          this.getDbForm();
         } else {
           this.action = this.actions[this.currentActionIndex];
           this.action.index = this.currentActionIndex;
@@ -156,6 +169,19 @@
         this.showResults = true;
 
         this.testResults = await testResponse.json();
+      },
+      async getDbForm() {
+        if (this.enableFencingDb === true) {
+          this.showTest = false;
+          this.showDbForm = true;
+        } else {
+          this.dbFormSubmitted();
+        }
+      },
+      dbFormSubmitted() {
+        this.showTest = false;
+        this.showDbForm = false;
+        this.getTestResults();
       },
     },
   };
